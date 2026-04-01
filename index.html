@@ -246,6 +246,14 @@
 
         const filename = `${participant_id}.csv`;
 
+        const save_data = {
+            type: jsPsychPipe,
+            action: "save",
+            experiment_id: "eNkz5Hp6ozWE",
+            filename: filename,
+            data_string: () => jsPsych.data.get().csv()
+        };
+
         var consent = {
             type: jsPsychHtmlButtonResponse,
             stimulus: '<p><b>Consent Form</b></p> <div style="text-align:left; background-color:lightblue; padding:2vw; max-width:80vw; max-height:60vh; overflow-y:auto;">' +

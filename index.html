@@ -198,11 +198,9 @@
                 { label:"Candy 🍬", need:"Nia feels hungry and wants to eat <b>4</b> candies.", outcome:"Suppose that Nia put <b>{{N}}</b> candies in her pocket. How would Nia feel?", singular: "Suppose that Nia put <b>{{N}}</b> candy in her pocket. How would Nia feel?",  emoji:"🍬", null:"Suppose that Nia did not get to put any candies in her pocket. How would Nia feel?" },
                 { label:"Healthy fruits 🍊", need:"Adam feels hungry and wants to eat <b>4</b> oranges.", outcome:"Suppose that Adam put <b>{{N}}</b> oranges in his bag. How would Adam feel?", singular:"Suppose that Adam put <b>{{N}}</b> orange in his bag. How would Adam feel?", emoji:"🍊", null:"Suppose that Adam did not get to put any oranges in his bag. How would Adam feel?" },
                 { label:"Ice Cream 🍦", need:"Zuri feels hungry and wants to eat <b>4</b> scoops of ice cream.", outcome:"Suppose that Zuri put <b>{{N}}</b> scoops of ice cream in her bowl. How would Zuri feel?", singular:"Suppose that Zuri put <b>1</b> scoop of ice cream in her bowl. How would Zuri feel?", emoji:"🍦", null:"Suppose that Zuri did not put to eat any ice creams in her bowl. How would Zuri feel?" }, 
-
             ]},
         };
-
-        const timeline = buildTimeline(jsPsych, categories, "The goal is to test the hypothesis that people intuitively think that the additional satisfaction gained from each extra unit acquired decreases over time.");
+        const timeline = buildTimeline(jsPsych, categories, "The goal of this study is to understand how people reason about others’ feelings. Specifically, we are interested in whether they infer negative rewards for additional items beyond the optimal point when someone <b>consumes</b> items, but not when someone merely <b>acquires</b> them. You were randomly assigned to one of the two conditions.");
         jsPsych.run(timeline);
     }
 
@@ -230,7 +228,8 @@
             ]},
         };
 
-        const timeline = buildTimeline(jsPsych, categories, "The goal is to test the hypothesis that people intuitively think that the additional satisfaction gained from each extra unit consumed decreases over time, and may ultimately become negative.");
+        const timeline = buildTimeline(jsPsych, categories, "The goal of this study is to understand how people reason about others’ feelings. Specifically, we are interested in whether they infer negative rewards for additional items beyond the optimal point when someone <b>consumes</b> items, but not when someone merely <b>acquires</b> them. You were randomly assigned to one of the two conditions.");
+
         jsPsych.run(timeline);
     }
 

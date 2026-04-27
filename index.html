@@ -15,6 +15,13 @@
   <link rel="stylesheet" href="style.css">
   <style>
     .jspsych-html-slider-response { margin-top: -100px !important; }
+    .followup-trial.jspsych-html-slider-response { margin-top: 0 !important; }
+    .followup-trial .jspsych-html-slider-response-container { transform: translateY(0); }
+    .followup-trial .jspsych-html-slider-response-prompt {
+      margin-top: 10px !important;
+      margin-bottom: 12px !important;
+    }
+    .followup-trial .jspsych-btn { margin-top: 0 !important; }
     .grid-image.crop3 {
       -webkit-mask-image: linear-gradient(to right, #000 77%, transparent 77%);
       mask-image: linear-gradient(to right, #000 77%, transparent 77%);
@@ -89,6 +96,47 @@
         .split(originalName).join(assignedName)
         .replace(/\bhis\b/g, possessiveFor(assignedName))
         .replace(/\bher\b/g, possessiveFor(assignedName));
+    }
+    function getMostRecentChildName(jsPsych) {
+      const vals = jsPsych.data.get().values();
+      for (let i = vals.length - 1; i >= 0; i--) {
+        if (vals[i] && vals[i].childName) return vals[i].childName;
+      }
+      return "the child";
+    }
+    function followupTrial(jsPsych) {
+      let previousTrialData = null;
+
+      return {
+        type: jsPsychHtmlSliderResponse,
+        stimulus: function() {
+          const previous = previousTrialData || jsPsych.data.get().last(1).values()[0] || {};
+          const name = previous.childName || getMostRecentChildName(jsPsych);
+          return `<p>Why do you think ${name} would feel this way?</p><img src="img/feelingScale2.png" class="feeling-scale" alt="scale" style="margin-top:-8px;">`;
+        },
+        labels: ["Very Bad","Bad","Neutral","Good","Very Good"],
+        min: 0,
+        max: 100,
+        slider_start: function() {
+          const previous = previousTrialData || jsPsych.data.get().last(1).values()[0] || {};
+          return Math.max(0, Math.min(100, Math.round(Number(previous.response ?? 50))));
+        },
+        require_movement: false,
+        prompt: `<div style="max-width:700px; margin: 10px auto 60px; text-align:center;"><p style="margin:10px 0 6px;">Please briefly explain your answer:</p><textarea name="followup_reason" rows="3" cols="60" style="width:100%;"></textarea></div>`,
+        css_classes: ['followup-trial'],
+        data: { followup: true, trial_id: 'followup_reason' },
+        on_start: function() {
+          previousTrialData = jsPsych.data.get().last(1).values()[0] || {};
+        },
+        on_finish: function(data) {
+          const ta = document.querySelector('textarea[name="followup_reason"]');
+          data.followup_explanation = ta ? ta.value : '';
+          data.followup_target_stimulus_label = previousTrialData?.stimulus_label ?? null;
+          data.followup_target_amount = previousTrialData?.amount ?? null;
+          data.followup_target_childName = previousTrialData?.childName ?? null;
+          data.followup_target_response = previousTrialData?.response ?? null;
+        }
+      };
     }
 
     const childMap = {
@@ -314,14 +362,44 @@
             }));
         });
 
+        const sliderIndices = mainTrials
+            .map((trial, index) => (
+                trial.type === jsPsychHtmlSliderResponse && !trial.data?.attention_check ? index : null
+            ))
+            .filter(index => index !== null);
+
+        const followupCount = Math.min(2, sliderIndices.length);
+        const followupIndices = followupCount > 0
+            ? jsPsych.randomization.sampleWithoutReplacement(sliderIndices, followupCount).sort((a, b) => b - a)
+            : [];
+
+        followupIndices.forEach(index => {
+            mainTrials.splice(index + 1, 0, followupTrial(jsPsych));
+        });
+
         // Attention checks
         const direction = jsPsych.randomization.sampleWithoutReplacement(['left', 'right'], 1)[0];
         const attentionTrial = attentionCheck(direction);
-        const insertionIndex = jsPsych.randomization.sampleWithoutReplacement(
-            Array.from({ length: shuffledStimuli.length - 1 }, (_, i) => (i + 1) * 2),
-            1
-        )[0];
-        mainTrials.splice(insertionIndex, 0, attentionTrial);
+        const attentionInsertPositions = [];
+
+        for (let i = 0; i < mainTrials.length; i++) {
+            const currentTrial = mainTrials[i];
+            const nextTrial = mainTrials[i + 1];
+
+            if (
+                currentTrial.type === jsPsychHtmlSliderResponse &&
+                !currentTrial.data?.attention_check &&
+                !currentTrial.data?.followup &&
+                !nextTrial?.data?.followup
+            ) {
+                attentionInsertPositions.push(i + 1);
+            }
+        }
+
+        if (attentionInsertPositions.length > 0) {
+            const insertionIndex = jsPsych.randomization.sampleWithoutReplacement(attentionInsertPositions, 1)[0];
+            mainTrials.splice(insertionIndex, 0, attentionTrial);
+        }
 
         const timeline = [consent, transition_expt1, ...mainTrials];
 
